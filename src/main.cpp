@@ -31,7 +31,7 @@ public:
     void read(const std::string &fname);
     void indexContacts();
     void textContactIndex();
-    void placeDots();
+    std::vector<std::pair<int, int>> placeDots();
 };
 
 cContactEvent::cContactEvent(const std::string &line)
@@ -78,8 +78,10 @@ void cContacts::textContactIndex()
     }
 }
 
-void cContacts::placeDots()
+std::vector<std::pair<int, int>> cContacts::placeDots()
 {
+    std::vector<std::pair<int, int>> dotlocs;
+
     // loop over contacts
     for (auto &contact : myContact)
     {
@@ -103,12 +105,15 @@ void cContacts::placeDots()
 
                 // draw the dot - here I just output the co=-ordinates
                 std::cout << "dot at " << frame << "," << yPosition << "\n";
+
+                dotlocs.push_back(std::make_pair(frame, yPosition));
             }
 
             if (frame == contact.end)
                 incontact = false;
         }
     }
+    return dotlocs;
 }
 
 class cGUI : public cStarterGUI
@@ -117,24 +122,35 @@ public:
     cGUI()
         : cStarterGUI(
               "Starter",
-              {50, 50, 1000, 500}),
-          lb(wex::maker::make<wex::label>(fm))
+              {50, 50, 1000, 500})
     {
-        lb.move(50, 50, 100, 30);
-        lb.text("Hello World");
 
         myContacts.read("test.txt");
         myContacts.indexContacts();
         myContacts.textContactIndex();
-        myContacts.placeDots();
+        myDotLocs = myContacts.placeDots();
+
+         fm.events().draw([&]( PAINTSTRUCT& ps )
+    {
+            wex::shapes S(ps);
+            S.fill();
+            S.color(0x0000FF);
+            for( auto& loc : myDotLocs )
+            {
+                S.circle(
+                    loc.first * 20,
+                    100 - loc.second * 20,
+                    10 );
+            }
+    });
 
         show();
         run();
     }
 
 private:
-    wex::label &lb;
     cContacts myContacts;
+    std::vector<std::pair<int, int>> myDotLocs;
 };
 
 main()
