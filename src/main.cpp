@@ -26,12 +26,15 @@ class cContacts
 public:
     std::vector<cContactEvent> myContact;
     std::vector<cContactEvent> myUnique;
+    std::vector<std::pair<int, int>> myDotLocs;
     int mymaxframe;
 
     void read(const std::string &fname);
     void indexContacts();
     void textContactIndex();
-    std::vector<std::pair<int, int>> placeDots();
+    void textDotLocs();
+    void placeDots();
+    void draw(wex::shapes &S);
 };
 
 cContactEvent::cContactEvent(const std::string &line)
@@ -77,11 +80,18 @@ void cContacts::textContactIndex()
         std::cout << k++ << " " << contact.cell1 << " " << contact.cell2 << "\n";
     }
 }
-
-std::vector<std::pair<int, int>> cContacts::placeDots()
+void cContacts::textDotLocs()
 {
-    std::vector<std::pair<int, int>> dotlocs;
+    for (auto &loc : myDotLocs)
+    {
+        std::cout << "dot at " 
+            << loc.first << "," << loc.second 
+            << "\n";
+    }
+}
 
+void cContacts::placeDots()
+{
     // loop over contacts
     for (auto &contact : myContact)
     {
@@ -102,18 +112,25 @@ std::vector<std::pair<int, int>> cContacts::placeDots()
                                     myUnique.end(),
                                     contact) -
                                 myUnique.begin() + 1;
-
-                // draw the dot - here I just output the co=-ordinates
-                std::cout << "dot at " << frame << "," << yPosition << "\n";
-
-                dotlocs.push_back(std::make_pair(frame, yPosition));
+                myDotLocs.push_back(std::make_pair(frame, yPosition));
             }
 
             if (frame == contact.end)
                 incontact = false;
         }
     }
-    return dotlocs;
+}
+void cContacts::draw(wex::shapes &S)
+{
+    S.fill();
+    S.color(0x0000FF);
+    for (auto &loc : myDotLocs)
+    {
+        S.circle(
+            loc.first * 20,
+            100 - loc.second * 20,
+            10);
+    }
 }
 
 class cGUI : public cStarterGUI
@@ -128,21 +145,15 @@ public:
         myContacts.read("test.txt");
         myContacts.indexContacts();
         myContacts.textContactIndex();
-        myDotLocs = myContacts.placeDots();
+        myContacts.placeDots();
+        myContacts.textDotLocs();
 
-         fm.events().draw([&]( PAINTSTRUCT& ps )
-    {
-            wex::shapes S(ps);
-            S.fill();
-            S.color(0x0000FF);
-            for( auto& loc : myDotLocs )
+        fm.events().draw(
+            [&](PAINTSTRUCT &ps)
             {
-                S.circle(
-                    loc.first * 20,
-                    100 - loc.second * 20,
-                    10 );
-            }
-    });
+                wex::shapes S(ps);
+                myContacts.draw(S);
+            });
 
         show();
         run();
@@ -150,7 +161,6 @@ public:
 
 private:
     cContacts myContacts;
-    std::vector<std::pair<int, int>> myDotLocs;
 };
 
 main()
