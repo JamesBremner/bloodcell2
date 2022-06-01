@@ -8,6 +8,7 @@
 #include <wex.h>
 #include "cStarterGUI.h"
 
+/// a contact event
 class cContactEvent
 {
 public:
@@ -15,26 +16,58 @@ public:
     std::string cell2;
     int start;
     int end;
+
+    /// construct from line of input
     cContactEvent(const std::string &line);
+
+    /// two contact events are equivalent if they involve same two cells
     bool operator==(const cContactEvent &other) const
     {
         return cell1 == other.cell1 && cell2 == other.cell2;
     }
 };
+
+/** all the contact events
+ *
+ * Implements https://stackoverflow.com/a/72451534/16582
+ */
 class cContacts
 {
 public:
+
+    /// process input
+    void process(const std::string &fname);
+
+    /// draw dots
+    void draw(wex::shapes &S);
+
+private:
+    /// Vector of contact events
     std::vector<cContactEvent> myContact;
+
+    /// vector of first contact event between cell pair
     std::vector<cContactEvent> myUnique;
+
+    /// vector of dot locations
     std::vector<std::pair<int, int>> myDotLocs;
+
+    /// maximum time
     int mymaxframe;
 
+    /// read input file
     void read(const std::string &fname);
+
+    /// index unique cell pair contacts
     void indexContacts();
+
+    /// display unique cell pair contacts as text on console
     void textContactIndex();
+
+    /// display dot locations as text on console
     void textDotLocs();
+
+    /// calculate dot locations
     void placeDots();
-    void draw(wex::shapes &S);
 };
 
 cContactEvent::cContactEvent(const std::string &line)
@@ -44,6 +77,15 @@ cContactEvent::cContactEvent(const std::string &line)
     iss >> cell2;
     iss >> start;
     iss >> end;
+}
+
+void cContacts::process(const std::string &fname)
+{
+    read("test.txt");
+    indexContacts();
+    textContactIndex();
+    placeDots();
+    textDotLocs();
 }
 
 void cContacts::read(const std::string &fname)
@@ -84,9 +126,9 @@ void cContacts::textDotLocs()
 {
     for (auto &loc : myDotLocs)
     {
-        std::cout << "dot at " 
-            << loc.first << "," << loc.second 
-            << "\n";
+        std::cout << "dot at "
+                  << loc.first << "," << loc.second
+                  << "\n";
     }
 }
 
@@ -141,12 +183,7 @@ public:
               "Starter",
               {50, 50, 1000, 500})
     {
-
-        myContacts.read("test.txt");
-        myContacts.indexContacts();
-        myContacts.textContactIndex();
-        myContacts.placeDots();
-        myContacts.textDotLocs();
+        myContacts.process( "test.txt" );
 
         fm.events().draw(
             [&](PAINTSTRUCT &ps)
